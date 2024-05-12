@@ -1,4 +1,6 @@
 import heapq
+import uuid
+
 """vi ska i detta projekt konstruera en orderbok"""
 #general description of an orderbook
 """ an order book is a list of buyers and sellers willing to engage in trade, usually trading financial securities.
@@ -20,11 +22,14 @@ class Order:
 
     def __init__(self, side: str, price: float, quantity: int):
         """ Initializes a new order with attributes for side, price and quantity """
-        pass
+        self.id = uuid.uuid4()
+        self.side = side
+        self.price = price
+        self.quantity = quantity
 
     def __repr__(self):
         """ for a string representation of an order. """
-        pass
+        return f"(s: {self.side}, p: {self.price}, q: {self.quantity})"
 
 
 class OrderBook:
@@ -40,7 +45,9 @@ class OrderBook:
 
     def __init__(self):
         """ we initialize the order book with separate heaps for buy and sell orders."""
-        pass
+        self.bids = []
+        self.asks = []
+
 
     def add_order(self, order: Order):
         """
@@ -49,7 +56,20 @@ class OrderBook:
         Args:
             order (Order): The order to be added.
         """
-        pass
+        """heapq är per automitk en minheap. det innebär att
+        minsta key'n (priset här) lagras överst.
+        genom att invertera tecknet (+ -> -) kommer det största värdet att
+        lagras överst för bidsidan = maxheap
+        1 -> 2 -> 3     :    -1 , -2, -3   -> """
+        if order.side == 'buy':
+            heapq.heappush(self.bids, (-order.price, order))
+        elif order.side == 'sell':
+            heapq.heappush(self.asks,(order.price,order))
+
+
+
+
+
 
     def match_order(self):
         """
@@ -66,12 +86,36 @@ class OrderBook:
 
 
         Returns:
-            (dict): The top buy and sell orders.
-        """
-        pass
+            (dict): The top buy and sell orders."""
+
+        top_orders = {}
+
+        if self.bids:
+            top_bid = self.bids[0][1] #note that bids are stored like (-price, order_object), hence [0] gets us the top most row and [1] gets us the entire order instance allowing us to display both its price and quantity
+            print(self.bids[0])
+            #print(top_bid)
+
+
+
 
     def __repr__(self):
         """
         will represent the entire order book as a string.
         """
+        return f'({self.bids}, {self.asks})'
         pass
+def main():
+    orderbok = OrderBook()
+    a = Order('buy', 50, 1)
+    b = Order('buy', 40, 1)
+    c=Order('buy', 60, 1)
+
+    orderbok.add_order(a)
+    orderbok.add_order(b)
+    orderbok.add_order(c)
+    orderbok.query_book()
+    print(orderbok)
+
+
+if __name__ == '__main__':
+    main()
