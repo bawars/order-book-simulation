@@ -23,17 +23,17 @@ class Order:
         quantity (int): The number of units one is looking to sell or buy.
     """
 
-    def __init__(self, side: str=None, price: float=None, quantity: int=None):
+    def __init__(self, side: str=None, price: float=None, quantity: int=None, seq=None):
         """ Initializes a new order with attributes for side, price and quantity """
         self.side = side
         self.price = price
         self.quantity = quantity
         self.id = uuid.uuid4()      #unique identifier for each order
-        self.timestamp = np.datetime64('now', 'as')
+        self.seq = seq
 
     def __repr__(self):
         """ for a string representation of an order. """
-        return f"(s: {self.side}, p: {self.price}, qty: {self.quantity}, id: {self.id}, ts: {self.timestamp}))"
+        return f"(s: {self.side}, p: {self.price}, qty: {self.quantity}, id: {self.id}, seq: {self.seq}))"
 
 
 class OrderBook:
@@ -51,6 +51,7 @@ class OrderBook:
         """ we initialize the order book with separate heaps for buy and sell orders."""
         self.bids = []
         self.asks = []
+        self.sequence_number = 0  # initialise a sequence number
 
 
     def add_order(self, order: Order):
@@ -66,41 +67,31 @@ class OrderBook:
         lagras överst för bidsidan = maxheap
         1 -> 2 -> 3     :    -1 , -2, -3   -> """
 
+        self.sequence_number += 1  # we incrementr the seq number for each added order
+        order.seq = self.sequence_number
 
         if order.side == 'buy':
-            heapq.heappush(self.bids, (-order.price, order.timestamp, order))
+            heapq.heappush(self.bids, (-order.price, order.seq, order))
         elif order.side == 'sell':
-            heapq.heappush(self.asks,(order.price, order.timestamp, order))
+            heapq.heappush(self.asks,(order.price, order.seq, order))
 
 
 
     def query_book(self):
-        """
-        will retrieve current top orders from bid and ask sides of the order book
-
-        Returns:
-            (dict): The top buy and sell orders."""
-
         top_orders = {}
-
         if self.bids:
-            top_bid = self.bids[0][2] #note that bids are stored like (-price, order_object), hence [0] gets us the top most row and [1] gets us the entire order instance allowing us to display both its side, price and quantity
-            top_orders['top_bid'] = {'side': top_bid.side, 'price': top_bid.price, 'qty': top_bid.quantity}
+            top_bid = self.bids[0][2]
+            top_orders['top_bid'] = {'side': top_bid.side, 'price': -self.bids[0][0], 'qty': top_bid.quantity, 'seq': top_bid.seq}
         else:
-            top_orders['top_bid'] = {'side': None, 'price': None, 'qty': None}
-
-
+            top_orders['top_bid'] = {'side': None, 'price': None, 'qty': None, 'seq': None}
 
         if self.asks:
             top_ask = self.asks[0][2]
-            top_orders['top_ask'] = {'side': top_ask.side, 'price': top_ask.price, 'qty': top_ask.quantity}
-
+            top_orders['top_ask'] = {'side': top_ask.side, 'price': self.asks[0][0], 'qty': top_ask.quantity, 'seq': top_ask.seq}
         else:
-            top_orders['top_ask'] = {'side': None, 'price': None, 'qty': None}
+            top_orders['top_ask'] = {'side': None, 'price': None, 'qty': None, 'seq': None}
 
-        #print(top_orders)
         return top_orders
-
 
 
     def match_order(self):
@@ -134,13 +125,14 @@ class OrderBook:
                 #if an order is fully traded out(qty = 0) it should be renmoved from the heap(s)
                 if top_bid.quantity == 0:
                     heapq.heappop(self.bids)
+                else:
+                    heapq.heapreplace(self.bids, (-top_bid.price, top_bid.seq, top_bid))
+
+
                 if top_ask.quantity == 0:
                     heapq.heappop(self.asks)
-
-                if top_bid.quantity > 0:
-                    heapq.heapreplace(self.bids, (-top_bid.price, top_bid))
-                if top_ask.quantity > 0:
-                    heapq.heapreplace(self.asks, (top_ask.price, top_ask))
+                else:
+                    heapq.heapreplace(self.asks, (-top_ask.price, top_ask.seq, top_ask))
 
             else:
                 break
@@ -162,18 +154,17 @@ class OrderBook:
 def main():
     enbok = OrderBook()
     a = Order(side='buy', price=50, quantity=10)
-    time.sleep(0.00001)
     b=Order('sell', 50, 5)
-    time.sleep(0.00001)
+    #time.sleep(0.0000001)
 
     c = Order('sell', 50, 2)
 
     enbok.add_order(a)
     enbok.add_order(b)
-    print(a.timestamp, b.timestamp)
-    #enbok.add_order(c)
+    enbok.add_order(c)
 
-    enbok.query_book()
+    print(enbok)
+    print(enbok.query_book())
     #print(enbok.match_order())
 
 
