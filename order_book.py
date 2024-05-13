@@ -84,17 +84,22 @@ class OrderBook:
         """
         will retrieve current top orders from bid and ask sides of the order book
 
-
         Returns:
             (dict): The top buy and sell orders."""
 
         top_orders = {}
 
         if self.bids:
-            top_bid = self.bids[0][1] #note that bids are stored like (-price, order_object), hence [0] gets us the top most row and [1] gets us the entire order instance allowing us to display both its price and quantity
-            print(self.bids[0])
-            #print(top_bid)
+            top_bid = self.bids[0][1] #note that bids are stored like (-price, order_object), hence [0] gets us the top most row and [1] gets us the entire order instance allowing us to display both its side, price and quantity
+            top_orders['top bid'] = {'price': top_bid.price, 'qty': top_bid.quantity}
+            #top_orders['top bid'] = {'price': top_bid[0]}
+            #print(top_orders)
 
+        if self.asks:
+            top_ask = self.asks[0][1]
+            top_orders['top ask'] = {'price': top_ask.price, 'qty': top_ask.quantity}
+
+        return top_orders
 
 
 
@@ -102,19 +107,23 @@ class OrderBook:
         """
         will represent the entire order book as a string.
         """
+
         return f'({self.bids}, {self.asks})'
-        pass
+
 def main():
     orderbok = OrderBook()
     a = Order('buy', 50, 1)
+    assert a.side == 'buy'
     b = Order('buy', 40, 1)
-    c=Order('buy', 60, 1)
+    assert b.price == 40
+    c=Order('sell', 60, 1)
+    d=Order('sell', 70, 1)
 
     orderbok.add_order(a)
     orderbok.add_order(b)
     orderbok.add_order(c)
+    orderbok.add_order(d)
     orderbok.query_book()
-    print(orderbok)
 
 
 if __name__ == '__main__':
