@@ -1,8 +1,5 @@
 import heapq
 import uuid
-from datetime import datetime
-import time
-import numpy as np
 
 """vi ska i detta projekt konstruera en orderbok"""
 #general description of an orderbook
@@ -23,17 +20,26 @@ class Order:
         quantity (int): The number of units one is looking to sell or buy.
     """
 
-    def __init__(self, side: str=None, price: float=None, quantity: int=None, seq=None):
+    def __init__(self, side: str=None, price: float=None, quantity: int=None):
         """ Initializes a new order with attributes for side, price and quantity """
         self.side = side
         self.price = price
         self.quantity = quantity
-        self.id = uuid.uuid4()      #unique identifier for each order
-        self.seq = seq
+        self.id = uuid.uuid1()      #unique identifier for each order
+        self.timestamp = self.id.time
+
+        def extract_timestamp(self, uuid1):
+            """
+            Extracts and converts the timestamp from UUID1.
+            UUID1 timestamps are the number of 100-nanosecond intervals since 00:00:00.00, 15 October 1582.
+            """
+            return (uuid1.time - 0x01B21DD213814000) / 1e7
 
     def __repr__(self):
         """ for a string representation of an order. """
-        return f"(s: {self.side}, p: {self.price}, qty: {self.quantity}, id: {self.id}, seq: {self.seq}))"
+        #return f"(s: {self.side}, p: {self.price}, qty: {self.quantity}, id: {self.id}, timestamp: {self.timestamp})"
+
+        return f"(s: {self.side}, p: {self.price}, qty: {self.quantity})"
 
 
 class OrderBook:
@@ -51,7 +57,6 @@ class OrderBook:
         """ we initialize the order book with separate heaps for buy and sell orders."""
         self.bids = []
         self.asks = []
-        self.sequence_number = 0  # initialise a sequence number
 
 
     def add_order(self, order: Order):
@@ -67,13 +72,11 @@ class OrderBook:
         lagras överst för bidsidan = maxheap
         1 -> 2 -> 3     :    -1 , -2, -3   -> """
 
-        self.sequence_number += 1  # we incrementr the seq number for each added order
-        order.seq = self.sequence_number
 
         if order.side == 'buy':
-            heapq.heappush(self.bids, (-order.price, order.seq, order))
+            heapq.heappush(self.bids, (-order.price, order.timestamp, order))
         elif order.side == 'sell':
-            heapq.heappush(self.asks,(order.price, order.seq, order))
+            heapq.heappush(self.asks,(order.price, order.timestamp, order))
 
 
 
@@ -81,15 +84,15 @@ class OrderBook:
         top_orders = {}
         if self.bids:
             top_bid = self.bids[0][2]
-            top_orders['top_bid'] = {'side': top_bid.side, 'price': -self.bids[0][0], 'qty': top_bid.quantity, 'seq': top_bid.seq}
+            top_orders['Bid_side'] = {'side': top_bid.side, 'price': -self.bids[0][0], 'qty': top_bid.quantity}
         else:
-            top_orders['top_bid'] = {'side': None, 'price': None, 'qty': None, 'seq': None}
+            top_orders['Bid_side'] = {'side': None, 'price': None, 'qty': None}
 
         if self.asks:
             top_ask = self.asks[0][2]
-            top_orders['top_ask'] = {'side': top_ask.side, 'price': self.asks[0][0], 'qty': top_ask.quantity, 'seq': top_ask.seq}
+            top_orders['Ask_side'] = {'side': top_ask.side, 'price': self.asks[0][0], 'qty': top_ask.quantity}
         else:
-            top_orders['top_ask'] = {'side': None, 'price': None, 'qty': None, 'seq': None}
+            top_orders['Ask_side'] = {'side': None, 'price': None, 'qty': None}
 
         return top_orders
 
@@ -126,13 +129,13 @@ class OrderBook:
                 if top_bid.quantity == 0:
                     heapq.heappop(self.bids)
                 else:
-                    heapq.heapreplace(self.bids, (-top_bid.price, top_bid.seq, top_bid))
+                    heapq.heapreplace(self.bids, (-top_bid.price, top_bid.timestamp, top_bid))
 
 
                 if top_ask.quantity == 0:
                     heapq.heappop(self.asks)
                 else:
-                    heapq.heapreplace(self.asks, (-top_ask.price, top_ask.seq, top_ask))
+                    heapq.heapreplace(self.asks, (-top_ask.price, top_ask.timestamp, top_ask))
 
             else:
                 break
@@ -143,30 +146,66 @@ class OrderBook:
         return f'matched orders: {matches}'
 
 
-
-
     def __repr__(self):
         """
         will represent the entire order book as a string.
         """
-        return f'({self.bids}, {self.asks})'
+        return f'Order Book(Bids: {self.bids}, Asks: {self.asks})'
 
 def main():
+    # tom orderbok från början
     enbok = OrderBook()
-    a = Order(side='buy', price=50, quantity=10)
-    b=Order('sell', 50, 5)
-    #time.sleep(0.0000001)
 
-    c = Order('sell', 50, 2)
+    # Test 1: Ensure the order book is initialized correctly
+    assert enbok is not None, "OrderBook should be initialized."
 
+    # a first test order 'a'
+    a = Order(side='buy', price=45, quantity=10)
     enbok.add_order(a)
+    assert (a.side, a.price, a.quantity) == ('buy', 45, 10)
+
+    # adding a second order 'b'
+    b = Order(side='sell', price=50, quantity=5)
     enbok.add_order(b)
+
+    # Top of book should return our two orders that are closest in price
+    top_orders_1 = enbok.query_book()
+    #print(top_orders)
+    assert top_orders_1['Bid_side']['side'] == 'buy'
+    assert top_orders_1['Bid_side']['price'] == 45
+
+    assert top_orders_1['Ask_side']['side'] == 'sell'
+    assert top_orders_1['Ask_side']['price'] == 50
+
+    # adding a third order 'c' which will replace order b in query_book() w/ sell prie of 45 to match bid side
+    c = Order(side='sell', price=45, quantity=2)
     enbok.add_order(c)
+    top_orders_2 = enbok.query_book()
+    #print(enbok.query_book())
+    #assert top_orders['Ask_side']['quantity'] == 5
+    assert top_orders_2['Ask_side']['price'] == 45
+    print(top_orders_2)
 
-    print(enbok)
-    print(enbok.query_book())
-    #print(enbok.match_order())
+    # eventuellt ett till ordertest men nu där vi jämför på tidsbasis och inte pris
 
+
+
+
+    # top of book ska returnera våra två ordrar som är närmast i pris, och om pris likadant -> de som ankom först i tid
+
+
+
+
+
+    # enbok.add_order(d)
+    # enbok.add_order(a)
+    # enbok.add_order(b)
+    # enbok.add_order(c)
+
+    #print("Initial Order Book:", enbok)
+    #print("Query Book:", enbok.query_book())
+    #print("Match Orders:", enbok.match_order())
+    #print("Order Book after Matching:", enbok)
 
 
 if __name__ == '__main__':
