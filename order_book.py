@@ -1,5 +1,8 @@
 import heapq
 import uuid
+import random
+import numpy as np
+import time
 
 """vi ska i detta projekt konstruera en orderbok"""
 #general description of an orderbook
@@ -122,7 +125,7 @@ class OrderBook:
                 top_bid.quantity -= traded_quantity
                 top_ask.quantity -= traded_quantity
 
-                matches.append((top_bid.id, top_ask.id, traded_quantity, top_ask.price))
+                matches.append((f'(Bid ID: {top_bid.id}, Ask ID: {top_ask.id}, Agreed price: {top_ask.price}, Traded quantity: {traded_quantity}'))
 
 
                 #if an order is fully traded out(qty = 0) it should be renmoved from the heap(s)
@@ -135,7 +138,7 @@ class OrderBook:
                 if top_ask.quantity == 0:
                     heapq.heappop(self.asks)
                 else:
-                    heapq.heapreplace(self.asks, (-top_ask.price, top_ask.timestamp, top_ask))
+                    heapq.heapreplace(self.asks, (top_ask.price, top_ask.timestamp, top_ask))
 
             else:
                 break
@@ -146,11 +149,61 @@ class OrderBook:
         return f'matched orders: {matches}'
 
 
+    # def __repr__(self):
+    #     """
+    #     will represent the entire order book as a string.
+    #     """
+    #     return f'Order Book(Bids: {self.bids}, Asks: {self.asks})'
+
     def __repr__(self):
-        """
-        will represent the entire order book as a string.
-        """
-        return f'Order Book(Bids: {self.bids}, Asks: {self.asks})'
+        bid_orders = [repr(order) for i, j, order in self.bids]
+        ask_orders = [repr(order) for i, j, order in self.asks]
+
+        if not bid_orders and not ask_orders:
+            return "Order Book is empty"
+
+        return f"Order Book\nBids: {bid_orders}\nAsks: {ask_orders}"
+    # def __repr__(self):
+    #     """
+    #     Will represent the entire order book as a string.
+    #     """
+    #     bid_orders = [f"(price: {-price}, qty: {order.quantity}, ts: {order.timestamp})" for price, _, order in
+    #                   self.bids]
+    #     ask_orders = [f"(price: {price}, qty: {order.quantity}, ts: {order.timestamp})" for price, _, order in
+    #                   self.asks]
+    #     return f"Order Book\nBids: {bid_orders}\nAsks: {ask_orders}"
+
+
+
+def generate_order(mean, std_dev, quantity_range):
+    side = random.choice(['buy', 'sell'])
+    price = round(random.normalvariate(mean, std_dev))
+    quantity = random.randint(*quantity_range)
+
+    return Order(side, price, quantity)
+
+
+def simulate_orders(order_book, duration, rate, mean_price, std_dev, quantity_range):
+
+    end_time = time.time() + duration
+
+    while time.time() < end_time:
+        time_to_next_order = np.random.exponential(1 / rate)
+        time.sleep(time_to_next_order)
+
+
+
+        order = generate_order(mean_price, std_dev, quantity_range)
+        order_book.add_order(order)
+        #print(f'whole order book: {order_book}: ')
+
+        print(f' top of book: {order_book.query_book()}')
+        print(order_book.match_order())
+        # print(f"Order Book:\n{order_book}\n")
+
+
+
+
 
 def main():
     # tom orderbok från början
@@ -158,36 +211,45 @@ def main():
 
     # Test 1: Ensure the order book is initialized correctly
     assert enbok is not None, "OrderBook should be initialized."
+    #
+    # # a first test order 'a'
+    # a = Order(side='buy', price=45, quantity=10)
+    # enbok.add_order(a)
+    # assert (a.side, a.price, a.quantity) == ('buy', 45, 10)
+    #
+    # # adding a second order 'b'
+    # b = Order(side='sell', price=50, quantity=5)
+    # enbok.add_order(b)
+    #
+    # # Top of book should return our two orders that are closest in price
+    # top_orders_1 = enbok.query_book()
+    # #print(top_orders)
+    # assert top_orders_1['Bid_side']['side'] == 'buy'
+    # assert top_orders_1['Bid_side']['price'] == 45
+    #
+    # assert top_orders_1['Ask_side']['side'] == 'sell'
+    # assert top_orders_1['Ask_side']['price'] == 50
+    #
+    # # adding a third order 'c' which will replace order b in query_book() w/ sell prie of 45 to match bid side
+    # c = Order(side='sell', price=45, quantity=2)
+    # enbok.add_order(c)
+    # top_orders_2 = enbok.query_book()
+    # #print(enbok.query_book())
+    # #assert top_orders['Ask_side']['quantity'] == 5
+    # assert top_orders_2['Ask_side']['price'] == 45
 
-    # a first test order 'a'
-    a = Order(side='buy', price=45, quantity=10)
-    enbok.add_order(a)
-    assert (a.side, a.price, a.quantity) == ('buy', 45, 10)
-
-    # adding a second order 'b'
-    b = Order(side='sell', price=50, quantity=5)
-    enbok.add_order(b)
-
-    # Top of book should return our two orders that are closest in price
-    top_orders_1 = enbok.query_book()
-    #print(top_orders)
-    assert top_orders_1['Bid_side']['side'] == 'buy'
-    assert top_orders_1['Bid_side']['price'] == 45
-
-    assert top_orders_1['Ask_side']['side'] == 'sell'
-    assert top_orders_1['Ask_side']['price'] == 50
-
-    # adding a third order 'c' which will replace order b in query_book() w/ sell prie of 45 to match bid side
-    c = Order(side='sell', price=45, quantity=2)
-    enbok.add_order(c)
-    top_orders_2 = enbok.query_book()
-    #print(enbok.query_book())
-    #assert top_orders['Ask_side']['quantity'] == 5
-    assert top_orders_2['Ask_side']['price'] == 45
-    print(top_orders_2)
-
+    #print(top_orders_2)
     # eventuellt ett till ordertest men nu där vi jämför på tidsbasis och inte pris
 
+
+    ##### matching orders ######
+    # the two orders at price level 45 should be executed, and then min value of their qts removed from the heap
+    # 1 buy order @45 for 10 units, 1 sell order @45 for 2 units --> thus 2 units should be traded,
+    # and 8 units of the buy order should remain in top of book and our second sell order take top of book position
+
+    #print(f'top of book before matching trades {enbok.query_book()}')
+    #print(f'{enbok.match_order()}')
+    #print(f'top of book after matching trades {enbok.query_book()}')
 
 
 
@@ -206,7 +268,8 @@ def main():
     #print("Query Book:", enbok.query_book())
     #print("Match Orders:", enbok.match_order())
     #print("Order Book after Matching:", enbok)
-
+    # Simulate orders
+    simulate_orders(enbok, duration=5, rate=1, mean_price=50, std_dev=2, quantity_range=(1, 20))
 
 if __name__ == '__main__':
     main()
