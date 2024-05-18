@@ -10,7 +10,7 @@ class OrderBookGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("Order book")
-        self.root.geometry("1200x900")
+        self.root.geometry("1200x600")
         self.order_book = OrderBook()
         self.matched_orders = []
         self.simulation_running = False
@@ -118,10 +118,44 @@ class OrderBookGUI:
 
 
     def start_simulation(self):
-        pass
+        """Starts a new simulation of the order book.
+        Previous results and current states are reset ,and retrieves inputs from users to run the simulation
+        in a new thread.
+
+        Raises a ValueError if invalid user inputs."""
+
+
+        self.order_book = OrderBook()       # we reset the orderbooks state
+        self.matched_orders = []            # and reset previous matches
+
+        for i in self.bids_tree.get_children():         # we clear the entries of our bid and ask trees.
+            self.bids_tree.delete(i)
+        for i in self.asks_tree.get_children():
+            self.asks_tree.delete(i)
+
+        # retrieve and convert user inputs which will be the parameters for our simulation
+        try:
+            duration = float(self.duration_entry.get())
+            rate = float(self.rate_entry.get())
+            mean_price = float(self.mean_price_entry.get())
+            std_dev = float(self.std_dev_entry.get())
+            quantity_range = tuple(map(int, self.quantity_range_entry.get().split(',')))
+
+            # flag that simulation is running, start simulation threading with user input variables
+            self.simulation_running = True
+            self.simulation_thread = threading.Thread(target = self.run_simulation, args = (duration, rate, mean_price, std_dev, quantity_range))
+            self.simulation_thread.start()
+
+        except ValueError as e:
+            print(f'invalid input: {e}')
 
     def stop_simulation(self):
         pass
+
+    def run_simulation(self):
+        pass
+
+
 
 
 if __name__ == '__main__':
