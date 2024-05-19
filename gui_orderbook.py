@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
+from tkinter import messagebox
 from order_book import OrderBook, generate_order
 import threading
 import time
@@ -158,11 +159,25 @@ class OrderBookGUI:
 
         # retrieve and convert user inputs which will be the parameters for our simulation
         try:
+
+            # checking for empty fields
+            if not self.duration_entry.get() or not self.rate_entry.get() or not self.mean_price_entry.get() or not self.std_dev_entry.get() or not self.quantity_range_entry.get():
+                raise ValueError("All fields must be filled.")
+
             duration = float(self.duration_entry.get())
             rate = float(self.rate_entry.get())
             mean_price = float(self.mean_price_entry.get())
             std_dev = float(self.std_dev_entry.get())
             quantity_range = tuple(map(int, self.quantity_range_entry.get().split(',')))
+
+            if rate <= 0:
+                raise ValueError("Rate must be greater than 0")
+
+            if quantity_range[0] <= 0 or quantity_range[1] <= 0 or quantity_range[0] > quantity_range[1]:
+                raise ValueError("Quantity range must follow the format (min, max) and be larger than 0")
+
+            if std_dev < 0:
+                raise ValueError("Standard deviation must be non-negative")
 
             # flag that simulation is running, start simulation threading with user input variables
             self.simulation_running = True
@@ -170,16 +185,13 @@ class OrderBookGUI:
             self.simulation_thread.start()
 
         except ValueError as e:
-            print(f'invalid input: {e}')
-
-
+            messagebox.showerror("Invalid Input", f"Please enter valid inputs. Error: {e}")
 
     def stop_simulation(self):
         """Stops the simulation by changing the simulation flag; waits for simulation thread to finish."""
         # signal to stop simulation
         self.simulation_running = False
         self.check_thread_finish() # let thread finish
-        print("Stop simulation button pressed")
 
     def check_thread_finish(self):
         """Method for checking if a thread has finished. Checks if thread is alive, and resets it upon finishing"""
@@ -203,19 +215,25 @@ class OrderBookGUI:
             mean_price (float): Mean price of orders
             std_dev (float): Standard deviation of order price
             quantity_range (tuple): Allow range of order quantities following (min, max)"""
-
+        self.root.after(10, self.update_gui)
         end_time = time.time() + duration
         while self.simulation_running and time.time() < end_time:
             time_to_next_order  = np.random.exponential(1 / rate)
             time.sleep(time_to_next_order)
 
             order = generate_order(mean_price, std_dev, quantity_range)
-            print(order)
             self.order_book.add_order(order)
             matches = self.order_book.match_order()
             self.matched_orders.extend(matches)
 
-            self.root.after(100, self.update_gui)
+        if not self.simulation_running:
+            print("Simulation stopped")
+        else:
+            print("Simulation finished")
+
+        self.simulation_running = False  # Ensure simulation is marked as not running
+
+
 
 
     def update_gui(self):
@@ -238,7 +256,7 @@ class OrderBookGUI:
 
         # schedule GUI update
         if self.simulation_running:
-            self.root.after(100, self.update_gui)
+            self.root.after(10, self.update_gui)
 
 
 if __name__ == '__main__':
