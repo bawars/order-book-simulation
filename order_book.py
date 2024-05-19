@@ -1,26 +1,22 @@
 import heapq
 import uuid
 import random
-import numpy as np
 import time
 
-"""vi ska i detta projekt konstruera en orderbok"""
-#general description of an orderbook
-""" an order book is a list of buyers and sellers willing to engage in trade, usually trading financial securities.
-the order book stores buyers and sellers according to the price they are willing to meet, units willing to buy/sell
-among other things.
-A matching algorithm is then employed to match a buyer to a seller [given certain criteria are met, like price, among other things]
-This makes the order book dynamic as there is an inflow of buyers/sellers and an outflow as they are matched to one another"""
+""" Herein we define the Order and OrderBook classes used for maintaining a financial order book. An order book is used
+to store buy and sell orders in a financial market, also matching said orders based on criteria such as price (among other things)
+There can be different types of orders, but in this project only so-called limit orders are specified."""
 
 class Order:
     """
-    An orderbook consists of different, unique orders. These orders
-    will be the objects of this class.
+    Defines what constitutes an order in our order book.
 
     Attributes:
-        side (str): Either 'buy' or 'sell' of an instrument. There are 2 sides.
-        price (float): The price for the instrument for either a buyer or seller.
-        quantity (int): The number of units one is looking to sell or buy.
+        side (str): Either 'buy' or 'sell'. Indicates the side of an order. E.g. buying or selling a stock.
+        price (float): The price for an order.
+        quantity (int): The number of units specified in an order.
+        id (UUID): Unique identifier for each order
+        timestamp (int): A timestamp; time of order creation.
     """
 
     def __init__(self, side: str=None, price: float=None, quantity: int=None):
@@ -31,25 +27,16 @@ class Order:
         self.id = uuid.uuid1()      #unique identifier for each order
         self.timestamp = self.id.time
 
-        def extract_timestamp(self, uuid1):
-            """
-            Extracts and converts the timestamp from UUID1.
-            UUID1 timestamps are the number of 100-nanosecond intervals since 00:00:00.00, 15 October 1582.
-            """
-            return (uuid1.time - 0x01B21DD213814000) / 1e7
 
     def __repr__(self):
         """ for a string representation of an order. """
-        #return f"(s: {self.side}, p: {self.price}, qty: {self.quantity}, id: {self.id}, timestamp: {self.timestamp})"
 
         return f"(s: {self.side}, p: {self.price}, qty: {self.quantity})"
 
 
 class OrderBook:
     """
-    In the OrderBook class, we will store orders and modify the orderbook
-    as new orders come or as orders leave the orderbook on a continous basis.
-    Sellers are placed on the 'ask' side of the orderbook, and buyers on the 'bid' side.
+    Constitutes our order book which stores and processes incoming and outgoing orders.
 
     Attributes:
         bids (list): A max-heap to store buy orders.
@@ -64,17 +51,11 @@ class OrderBook:
 
     def add_order(self, order: Order):
         """
-        we will add an (incoming) order to either bid or ask heap.
+        Adds (incoming) orders to either the bid or ask heap.
 
         Args:
             order (Order): The order to be added.
         """
-        """heapq är per automitk en minheap. det innebär att
-        minsta key'n (priset här) lagras överst.
-        genom att invertera tecknet (+ -> -) kommer det största värdet att
-        lagras överst för bidsidan = maxheap
-        1 -> 2 -> 3     :    -1 , -2, -3   -> """
-
 
         if order.side == 'buy':
             heapq.heappush(self.bids, (-order.price, order.timestamp, order))
@@ -84,6 +65,11 @@ class OrderBook:
 
 
     def query_book(self):
+        """Method for querying the top bid and ask orders in the order book. Useful property of an order book, as it is the 'top of book' where
+        the actual trading takes place.
+
+        Returns:
+            dict: A dictionary with our top of book orders"""
         top_orders = {}
         if self.bids:
             top_bid = self.bids[0][2]
@@ -99,63 +85,42 @@ class OrderBook:
 
         return top_orders
 
-
     def match_order(self):
-        """
-        We will need to match orders to one another (i.e. matching buyers and sellers)
-        This will, other than accounting for price (which must be equal to match a buyer and seller)
-        also utilise a FIFO approach (First-in-First-Out). The first order placed is the first to be matched, if it meets the
-        matching criteria.
-        """
+        """Algorithm for matching buy and sell orders in our order book. Prioritises firstly price, and secondly arrival time (FIFO approach).
 
-        # vi vill kolla om top of book har matchande priser:
+        Returns:
+            list: A list of matched orders with pertinent information (IDs, price, quantity, timestamp)"""
 
         matches = []
 
         while self.bids and self.asks:
-            #top_of_book = (self.bids[0][1], self.asks[0][1])
             top_bid = self.bids[0][2]
             top_ask = self.asks[0][2]
 
-
-
             if top_bid.price >= top_ask.price:
-                # we trade out the quantities of the smaller order
                 traded_quantity = min(top_bid.quantity, top_ask.quantity)
                 top_bid.quantity -= traded_quantity
                 top_ask.quantity -= traded_quantity
 
-                matches.append((f'(Bid ID: {top_bid.id}, Ask ID: {top_ask.id}, Agreed price: {top_ask.price}, Traded quantity: {traded_quantity}'))
+                match_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+                matches.append((f'{top_bid.id}, {top_ask.id}', top_ask.price, traded_quantity, match_time))
 
-
-                #if an order is fully traded out(qty = 0) it should be renmoved from the heap(s)
                 if top_bid.quantity == 0:
                     heapq.heappop(self.bids)
                 else:
                     heapq.heapreplace(self.bids, (-top_bid.price, top_bid.timestamp, top_bid))
 
-
                 if top_ask.quantity == 0:
                     heapq.heappop(self.asks)
                 else:
                     heapq.heapreplace(self.asks, (top_ask.price, top_ask.timestamp, top_ask))
-
             else:
                 break
 
-
-        #print(matches)
-        #print(self.bids,self.asks)
-        return f'matched orders: {matches}'
-
-
-    # def __repr__(self):
-    #     """
-    #     will represent the entire order book as a string.
-    #     """
-    #     return f'Order Book(Bids: {self.bids}, Asks: {self.asks})'
+        return matches
 
     def __repr__(self):
+        """Returns a string representation of the order book."""
         bid_orders = [repr(order) for i, j, order in self.bids]
         ask_orders = [repr(order) for i, j, order in self.asks]
 
@@ -163,40 +128,23 @@ class OrderBook:
             return "Order Book is empty"
 
         return f"Order Book\nBids: {bid_orders}\nAsks: {ask_orders}"
-    # def __repr__(self):
-    #     """
-    #     Will represent the entire order book as a string.
-    #     """
-    #     bid_orders = [f"(price: {-price}, qty: {order.quantity}, ts: {order.timestamp})" for price, _, order in
-    #                   self.bids]
-    #     ask_orders = [f"(price: {price}, qty: {order.quantity}, ts: {order.timestamp})" for price, _, order in
-    #                   self.asks]
-    #     return f"Order Book\nBids: {bid_orders}\nAsks: {ask_orders}"
 
 
 
 def generate_order(mean, std_dev, quantity_range):
+    """
+    Generates a random order using a mean price, standard deviation and a quantity range.
+
+    Args:
+        mean (float): Mean price of an order.
+        std_dev (float): Standard deviation of the price.
+        quantity_range (tuple): A tuple for allowed quantity range, in form (min,max).
+
+    Returns:
+        Order: A randomly generated order.
+    """
     side = random.choice(['buy', 'sell'])
     price = round(random.normalvariate(mean, std_dev))
     quantity = random.randint(*quantity_range)
 
     return Order(side, price, quantity)
-
-
-def simulate_orders(order_book, duration, rate, mean_price, std_dev, quantity_range):
-
-    end_time = time.time() + duration
-
-    while time.time() < end_time:
-        time_to_next_order = np.random.exponential(1 / rate)
-        time.sleep(time_to_next_order)
-
-
-
-        order = generate_order(mean_price, std_dev, quantity_range)
-        order_book.add_order(order)
-        #print(f'whole order book: {order_book}: ')
-
-        print(f' top of book: {order_book.query_book()}')
-        print(order_book.match_order())
-        # print(f"Order Book:\n{order_book}\n")
