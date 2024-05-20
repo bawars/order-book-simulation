@@ -84,10 +84,23 @@ def run_assertion_tests():
         assert app.quantity_range_entry.get() == ('1,10')
 
         app.start_simulation()
-        assert app.simulation_running == True
-        root.after(12500, app.stop_simulation)
-        root.after(15000, root.destroy)
 
+        def check_during_simulation():
+            assert app.simulation_running == True
+
+
+        def stop_and_check_simulation():
+            app.stop_simulation()
+            root.after(2000, final_checks)
+
+        def final_checks():
+            assert app.simulation_running == False
+            assert app.simulation_thread is None
+
+        #root.after schedules a function call after specified time in ms
+        root.after(12500, check_during_simulation)
+        root.after(15000, stop_and_check_simulation)
+        root.after(20000, root.destroy)
 
     root.after(10, simulate_gui)
     root.mainloop()
