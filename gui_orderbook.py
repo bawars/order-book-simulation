@@ -24,7 +24,7 @@ class OrderBookGUI:
 
         self.root = root
         self.root.title("Order book")
-        self.root.geometry("1200x600")
+        self.root.geometry("1400x600")
         self.order_book = OrderBook()
         self.matched_orders = []
         self.simulation_running = False
@@ -40,7 +40,7 @@ class OrderBookGUI:
 
         # Treeview for bids
         self.bids_tree = ttk.Treeview(self.frame, columns=("Qty", "Price"), show="headings", height=15)
-        self.bids_tree.heading("Price", text="Price")
+        self.bids_tree.heading("Price", text="Bids")
         self.bids_tree.heading("Qty", text="Qty")
         self.bids_tree.column("Price", width=100, anchor="center")
         self.bids_tree.column("Qty", width=100, anchor="center")
@@ -48,7 +48,7 @@ class OrderBookGUI:
 
         # Treeview for asks
         self.asks_tree = ttk.Treeview(self.frame, columns=("Price", "Qty"), show="headings", height=15)
-        self.asks_tree.heading("Price", text="Price")
+        self.asks_tree.heading("Price", text="Asks")
         self.asks_tree.heading("Qty", text="Qty")
         self.asks_tree.column("Price", width=100, anchor="center")
         self.asks_tree.column("Qty", width=100, anchor="center")
@@ -60,6 +60,10 @@ class OrderBookGUI:
 
         self.stop_button = ttk.Button(self.root, text="Stop Simulation", command=self.stop_simulation)
         self.stop_button.pack(side=tk.LEFT, padx=5, pady=5)
+
+        # Quit button to stop simulation and close the window
+        self.quit_button = ttk.Button(self.root, text="Quit", command=self.quit_application)
+        self.quit_button.pack(side=tk.RIGHT, padx=5, pady=5)
 
         # Input fields for simulation parameters
         self.create_input_fields()
@@ -75,7 +79,7 @@ class OrderBookGUI:
                         rate: Rate parameter of the exponential distribution, used for generating time between orders. Can be any number above 0.
                         mean_price: The mean price of an order; price follows a normal distribution.
                         std_dev: The standard deviation of price; as price follows a normal dist. it must have a specified mean and standard deviation.
-                        quantity_range: The quantityt range of units any order can take on; any order can generate an order for units in the span (a,b) for two integers a,b."""
+                        quantity_range: The quantity range of units any order can take on; any order can generate an order for units in the span (a,b) for two integers a,b."""
 
         # Frame for input fields
         self.input_frame = ttk.Frame(self.root)
@@ -193,6 +197,14 @@ class OrderBookGUI:
         self.simulation_running = False
         self.check_thread_finish() # let thread finish
 
+    def quit_application(self):
+        """Stops the simulation if running and closes application window."""
+        self.simulation_running = False  # Stop the simulation
+        if self.simulation_thread and self.simulation_thread.is_alive():
+            self.simulation_thread.join()  # Wait for the simulation thread to finish
+        self.root.destroy()
+        print("Application quit")
+
     def check_thread_finish(self):
         """Method for checking if a thread has finished. Checks if thread is alive, and resets it upon finishing"""
         if self.simulation_thread and self.simulation_thread.is_alive():
@@ -232,8 +244,6 @@ class OrderBookGUI:
             print("Simulation finished")
 
         self.simulation_running = False  # Ensure simulation is marked as not running
-
-
 
 
     def update_gui(self):
