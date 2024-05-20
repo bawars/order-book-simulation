@@ -76,7 +76,7 @@ def run_assertion_tests():
         app.duration_entry.insert(0, '20')
         assert app.duration_entry.get() == '20'
 
-        app.rate_entry.insert(0, '2')
+        app.rate_entry.insert(0, '4')
         app.mean_price_entry.insert(0, '50')
         app.std_dev_entry.insert(0, '5')
 
@@ -99,7 +99,7 @@ def run_assertion_tests():
 
         #root.after schedules a function call after specified time in ms
         root.after(12500, check_during_simulation)
-        root.after(15000, stop_and_check_simulation)
+        root.after(17500, stop_and_check_simulation)
         root.after(20000, root.destroy)
 
     root.after(10, simulate_gui)
@@ -107,14 +107,10 @@ def run_assertion_tests():
 
 
 if __name__ == '__main__':
-    """ run_assertion_tests() will include a pre-made simulated run. 
+    """ run_assertion_tests() will include a pre-made simulated run that runs for 20 seconds
 
-    After it is completed, you can create your own simulation with your parameters of choice
-    for the 'rate' parameter, I suggest starting small (<10) and then bumping it up if you want to experiment """
+    If you wish to run a simulation with your own choice of parameters, please run the separate gui_orderbook.py file.
+    For the 'rate' parameter, I suggest starting small (<10) and then bumping it up if you want to experiment """
 
     run_assertion_tests()
     print("All tests passed successfully")
-
-    root = tk.Tk()
-    app = OrderBookGUI(root)
-    root.mainloop()
