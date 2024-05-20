@@ -227,6 +227,8 @@ class OrderBookGUI:
             mean_price (float): Mean price of orders
             std_dev (float): Standard deviation of order price
             quantity_range (tuple): Allow range of order quantities following (min, max)"""
+
+
         self.root.after(10, self.update_gui)
         end_time = time.time() + duration
         while self.simulation_running and time.time() < end_time:
@@ -243,7 +245,7 @@ class OrderBookGUI:
         else:
             print("Simulation finished")
 
-        self.simulation_running = False  # Ensure simulation is marked as not running
+        self.simulation_running = False  # ensure simulation is marked as not running
 
 
     def update_gui(self):
