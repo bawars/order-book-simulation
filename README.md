@@ -59,7 +59,7 @@ To run the built-in tests and simulate the GUI, execute the `main.py` script:
 
 
 
-##**Simulation Parameters**:
+## Simulation Parameters:
 
 **Duration**: Time duration of the simulation in seconds.
 
@@ -71,9 +71,12 @@ To run the built-in tests and simulate the GUI, execute the `main.py` script:
 
 **Quantity Range**: Allowed range of quantities for orders (min, max). I.e., the number of units one may minimally or maximally order.
 
-###GUI Controls:
+### GUI Controls:
    - **Start Simulation**: Begin the simulation with the specified parameters.
+
    - **Stop Simulation**: Stops the simulation.
+
    - **Show Matched Orders Log**: Display a separate window with all executed trades and relevant information.
+
    - **Quit**: Stop the simulation and close the application.
 
