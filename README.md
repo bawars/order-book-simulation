@@ -17,13 +17,49 @@
 
 ## Usage
 
-1. **Running the Simulation**:
-   - Clone the repository.
+1. **How to use and interact with orders and the orderbook**:
+   - Firstly, clone the repository.
    - Ensure you have Python installed.
-   - Run the `gui_orderbook.py` file to start the GUI. This will allow you to make your own simulation <br> with your own parameters of choice.
+   - Install the required package(s):
+     - `pip install numpy`
+   - To run the GUI:
+     - `python gui_orderbook.py`
+   
+
+   - Example usages:
+
+Add orders to an order book
+
+    #We begin with an empty order book:
+     order_book = OrderBook()
+     
+    # create orders and add them using the add_order method:
+      buy_order = Order('side' = buy, price = 50, quantity = 5)
+      sell_order = Order('side' = sell, price = 51, quantity = 4)
+
+      order_book.add_order(buy_order)
+      order_book.add_order(sell_order)
+
+Knowing what constitutes 'top of book' is very important in the context of markets. These are the trades closest to matching and thereby executing.
+To assess which orders are top of book, call the query method query_book().
+
+    top_orders = order_book.query_book()
+
+In our case, top of book would be the buy and sell order we had created, as no other orders exist and they are on opposite sides od the book.
+To assess if any orders can be matched, we run the match_order() method:
+
+      matches = order_book.match_order()
+
+Now, if any orders had matched, they would be stored in the variable matches.
+
+## Running Tests
+To run the built-in tests and simulate the GUI, execute the `main.py` script:
+
+    python main.py
 
 
-2. **Simulation Parameters**:
+
+3. **Simulation Parameters**:
     - **Duration**: Time duration of the simulation in seconds.
    - **Rate**: Determines the rate at which orders will enter the market. It is the <br> rate parameter of the exponential distribution. I suggest  starting with a value <br> smaller than 10 then bumping it up if you so wish.
    - **Mean Price**: Mean price of incoming orders. 
@@ -32,7 +68,7 @@
    - **Quantity Range**: Allowed range of quantities for orders (min, max). I.e., the number of units one may minimally or maximally order. 
 
 
-3. **Controls**:
+4 **GUI Controls**:
    - **Start Simulation**: Begin the simulation with the specified parameters.
    - **Stop Simulation**: Stops the simulation.
    - **Show Matched Orders Log**: Display a separate window with all executed trades and relevant information.
