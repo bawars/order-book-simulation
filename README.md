@@ -17,7 +17,7 @@
 
 ## Usage
 
-1. **How to use and interact with orders and the orderbook**:
+1. **Getting started**:
    - Firstly, clone the repository.
    - Ensure you have Python installed.
    - Install the required package(s):
@@ -26,7 +26,7 @@
      - `python gui_orderbook.py`
    
 
-   - Example usages:
+2. **Example usages**:
 
 Add orders to an order book
 
@@ -59,16 +59,18 @@ To run the built-in tests and simulate the GUI, execute the `main.py` script:
 
 
 
-3. **Simulation Parameters**:
-    - **Duration**: Time duration of the simulation in seconds.
-   - **Rate**: Determines the rate at which orders will enter the market. It is the <br> rate parameter of the exponential distribution. I suggest  starting with a value <br> smaller than 10 then bumping it up if you so wish.
-   - **Mean Price**: Mean price of incoming orders. 
-     - Prices will follow a normal distribution. They will thus need a mean value [...and a standard deviation].
-   - **Standard Deviation**: The standard deviation of price.
-   - **Quantity Range**: Allowed range of quantities for orders (min, max). I.e., the number of units one may minimally or maximally order. 
+##**Simulation Parameters**:
+**Duration**: Time duration of the simulation in seconds.
 
+**Rate**: Determines the rate at which orders will enter the market. It is the <br> rate parameter of the exponential distribution. I suggest  starting with a value <br> smaller than 10 then bumping it up if you so wish.
 
-4. **GUI Controls**:
+**Mean Price**: Mean price of incoming orders. Prices will follow a normal distribution. They will thus need a mean value [...and a standard deviation].
+
+**Standard Deviation**: The standard deviation of price.
+
+**Quantity Range**: Allowed range of quantities for orders (min, max). I.e., the number of units one may minimally or maximally order.
+
+###**GUI Controls**:
    - **Start Simulation**: Begin the simulation with the specified parameters.
    - **Stop Simulation**: Stops the simulation.
    - **Show Matched Orders Log**: Display a separate window with all executed trades and relevant information.
