@@ -45,7 +45,7 @@ To assess which orders are top of book, call the query method query_book().
 
     top_orders = order_book.query_book()
 
-In our case, top of book would be the buy and sell order we had created, as no other orders exist and they are on opposite sides od the book.
+In our case, top of book would be the buy and sell order we had created, as no other orders exist and they are on opposite sides of the book.
 To assess if any orders can be matched, we run the match_order() method:
 
       matches = order_book.match_order()
@@ -68,7 +68,7 @@ To run the built-in tests and simulate the GUI, execute the `main.py` script:
    - **Quantity Range**: Allowed range of quantities for orders (min, max). I.e., the number of units one may minimally or maximally order. 
 
 
-4 **GUI Controls**:
+4. **GUI Controls**:
    - **Start Simulation**: Begin the simulation with the specified parameters.
    - **Stop Simulation**: Stops the simulation.
    - **Show Matched Orders Log**: Display a separate window with all executed trades and relevant information.
